@@ -1,44 +1,43 @@
-peteryu+ 13274 78.2  1.4 77616244 1898064 ?    RNl  Mar23 4839:24 python domain_adaption_dann.py -test 0 -re 1 -coef 0.1 -pre 0 -obj msle
-peteryu+ 13466 77.1  1.2 77434128 1689320 ?    RNl  Mar23 4771:48 python domain_adaption_dann.py -test 0 -re 1 -coef 0.1 -pre 0 -obj mae
-peteryu+ 13651 77.7  1.2 77312484 1702060 ?    RNl  Mar23 4805:03 python domain_adaption_dann.py -test 0 -re 1 -coef 0.1 -pre 0 -obj binary_crossentropy
-Mon Mar 27 14:16:47 2017       
+peteryu+ 56114 95.4  4.3 80536732 5750248 pts/7 RNl 04:04  31:46 python window.py -w 128 -re 1 -att 0 -bi 1 -file 39nodes-0.dat
+peteryu+ 56398 95.7  5.6 82422352 7506224 pts/7 RNl 04:05  30:49 python window.py -w 128 -re 1 -att 0 -bi 1 -file 39nodes-1.dat
+peteryu+ 56549 96.4  9.2 87235068 12231256 pts/7 RNl 04:06  30:54 python window.py -w 128 -re 1 -att 0 -bi 1 -file 39nodes-2.dat
+Sat Apr 29 04:38:08 2017       
 +-----------------------------------------------------------------------------+
-| NVIDIA-SMI 375.26                 Driver Version: 375.26                    |
+| NVIDIA-SMI 375.51                 Driver Version: 375.51                    |
 |-------------------------------+----------------------+----------------------+
 | GPU  Name        Persistence-M| Bus-Id        Disp.A | Volatile Uncorr. ECC |
 | Fan  Temp  Perf  Pwr:Usage/Cap|         Memory-Usage | GPU-Util  Compute M. |
 |===============================+======================+======================|
 |   0  GeForce GTX 1080    Off  | 0000:04:00.0     Off |                  N/A |
-| 49%   74C    P2   119W / 180W |   7839MiB /  8113MiB |     98%      Default |
+| 27%   31C    P8     5W / 180W |      2MiB /  8114MiB |      0%      Default |
 +-------------------------------+----------------------+----------------------+
 |   1  GeForce GTX 1080    Off  | 0000:05:00.0     Off |                  N/A |
-| 30%   46C    P8    10W / 180W |      2MiB /  8113MiB |      0%      Default |
+| 42%   65C    P2   102W / 180W |   1099MiB /  8114MiB |     71%      Default |
 +-------------------------------+----------------------+----------------------+
 |   2  GeForce GTX 1080    Off  | 0000:08:00.0     Off |                  N/A |
-| 42%   62C    P2    59W / 180W |    991MiB /  8113MiB |     35%      Default |
+| 27%   32C    P8     5W / 180W |      2MiB /  8114MiB |      0%      Default |
 +-------------------------------+----------------------+----------------------+
 |   3  GeForce GTX 1080    Off  | 0000:09:00.0     Off |                  N/A |
-| 43%   64C    P2    55W / 180W |   1045MiB /  8113MiB |     38%      Default |
+| 44%   57C    P2    41W / 180W |    519MiB /  8114MiB |     17%      Default |
 +-------------------------------+----------------------+----------------------+
 |   4  GeForce GTX 1080    Off  | 0000:84:00.0     Off |                  N/A |
-| 29%   43C    P8     5W / 180W |      2MiB /  8113MiB |      0%      Default |
+| 37%   50C    P2    40W / 180W |    719MiB /  8114MiB |     20%      Default |
 +-------------------------------+----------------------+----------------------+
 |   5  GeForce GTX 1080    Off  | 0000:85:00.0     Off |                  N/A |
-| 41%   62C    P2    59W / 180W |   1365MiB /  8113MiB |     15%      Default |
+| 27%   32C    P8     5W / 180W |      2MiB /  8114MiB |      0%      Default |
 +-------------------------------+----------------------+----------------------+
 |   6  GeForce GTX 1080    Off  | 0000:88:00.0     Off |                  N/A |
-| 31%   44C    P8    10W / 180W |      2MiB /  8113MiB |      0%      Default |
+| 27%   29C    P8     5W / 180W |      2MiB /  8114MiB |      0%      Default |
 +-------------------------------+----------------------+----------------------+
 |   7  GeForce GTX 1080    Off  | 0000:89:00.0     Off |                  N/A |
-| 29%   43C    P8     9W / 180W |      2MiB /  8113MiB |      0%      Default |
+| 27%   31C    P8     5W / 180W |      2MiB /  8114MiB |      0%      Default |
 +-------------------------------+----------------------+----------------------+
                                                                                
 +-----------------------------------------------------------------------------+
 | Processes:                                                       GPU Memory |
 |  GPU       PID  Type  Process name                               Usage      |
 |=============================================================================|
-|    0     38150    C   python                                        7837MiB |
-|    2     13274    C   python                                        1363MiB |
-|    3     13466    C   python                                        1383MiB |
-|    5     13651    C   python                                        1363MiB |
+|    1     56114    C   python                                        1161MiB |
+|    3     56398    C   python                                         519MiB |
+|    4     56549    C   python                                         717MiB |
 +-----------------------------------------------------------------------------+
