@@ -9,6 +9,7 @@ import time
 
 import numpy as np
 import matplotlib.pyplot as plt
+plt.switch_backend('agg')
 
 from tqdm import tqdm
 from keras import layers, callbacks
@@ -19,6 +20,19 @@ from keras_utils import UpdateMonitor, Logger
 from misc_utils import Flush
 from keras.utils import plot_model
 
+#
+import tensorflow as tf
+import keras.backend.tensorflow_backend as KTF
+
+def get_session(gpu_fraction = 0.3):
+    num_threads = os.environ.get('OMP_NUM_THREADS')
+    gpu_options = tf.GPUOptions(per_process_gpu_memory_fraction = gpu_fraction)
+    if num_threads:
+        return tf.Session(config = tf.ConfigProto(gpu_options = tpu_options, intra_op_parallelism_threads=num_threads))
+    else:
+        return tf.Session(config=tf.ConfigProto(gpu_options = gpu_options))
+
+#
 graph = Graph(topo_file='topo9.yaml')
 NAME = 'RV4'
 parser = argparse.ArgumentParser(prog=NAME)
@@ -218,11 +232,13 @@ def make_train_data(ntable, routes, max_inter_capacity_size, maxlen_que, maxlen_
     return cap_train, que_train, ans_train
 
 # data path configs, Mac version
-_DATA_DIR = os.path.join(os.path.expanduser('~/datasets/routing'), 'data0524-{}'.format(args.data))
+#_DATA_DIR = os.path.join(os.path.expanduser('~/datasets/routing'), 'data0524-{}'.format(args.data))
 
 # data path configs, server version
 #_DATA_FILE_NAME = 'output_BRPC.dat'
-#_DATA_DIR = os.path.join(os.path.expanduser('~/Zhong_Exp/Datasets/routing'), 'data-{}'.format(args.data))
+_DATA_DIR = os.path.join(os.path.expanduser('~/Zhong_Exp/Datasets/routing'), 'data-{}'.format(args.data))
+_TRAINLOGS_DIR = os.path.join(os.path.expanduser('~/Zhong_Exp/Datasets/routing/'), 'train-logs-{}'.format(args.data))
+_MODELS_DIR = os.path.join(os.path.expanduser('~/Zhong_Exp/Datasets/routing/'), 'models-{}'.format(args.data))
 #_DATA_FILE_PATH = os.path.join(_DATA_DIR, _DATA_FILE_NAME)
 #_PKL_FILE_PATH = _DATA_FILE_PATH.replace('.dat', '.pkl')
 
@@ -265,7 +281,7 @@ def model_training(capacity_size, cap_train, que_train, ans_train, load):
 
     model.compile(optimizer='adam', loss='categorical_crossentropy', metrics=['accuracy'])
     model.summary()
-    plot_model(model, to_file='model.png', show_shapes=True)
+    #plot_model(model, to_file='model.png', show_shapes=True)
 
     # train the model each generation and show predictions against the validation dataset
     reducer = callbacks.ReduceLROnPlateau(patience=reduce_patience, verbose=1)
@@ -289,8 +305,11 @@ def model_training(capacity_size, cap_train, que_train, ans_train, load):
     print('\ntrain finished\n')
     plothistory.loss_plot('epoch')
     loss_file = 'loss' + load + '.pdf'
-    plt.savefig(loss_file, dpi=175)
-    model.save('models/Req2Route' + load + '.h5')
+    loss_location = os.path.join(_MODELS_DIR, loss_file)
+    plt.savefig(loss_location, dpi=175)
+    _MODELNAME = 'Req2Route' + load + '.h5'
+    model_location = os.path.join(_MODELS_DIR, _MODELNAME)
+    model.save(model_location)
     print('\nmodel saved!\n')
 
 if __name__ == '__main__':
@@ -301,7 +320,9 @@ if __name__ == '__main__':
     stdout_bak = sys.stdout
     print('params:', args)
 
-    _LOAD_DIRECT = 'load_direct.txt'
+    KTF.set_session(get_session())
+
+    _LOAD_DIRECT = 'load_direct_model.txt'
     _LOAD_DIRECT_PATH = os.path.join(_DATA_DIR, _LOAD_DIRECT)
     load_lines = []
     with open(_LOAD_DIRECT_PATH, 'r', encoding='gb2312') as fr:
@@ -316,7 +337,8 @@ if __name__ == '__main__':
 
         if args.redirect:
             try:
-                logfile_name = 'logs/' + load + '-train.log'
+                _LOGFILE = 'train' + load + '.log'
+                logfile_name = os.path.join(_TRAINLOGS_DIR, _LOGFILE)
                 print('training stdout messages will be saved in', logfile_name)
                 logfile = open(logfile_name, 'w', encoding='utf8')
                 sys.stdout = Flush(logfile)

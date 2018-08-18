@@ -67,7 +67,7 @@ class Graph:
         return cap
 
     def is_buildable(self, path, verbose=False):
-        if verbose: print('[is_buildable] start (index): {}'.format(path))
+        if verbose: print('\n[is_buildable] start (index): {}'.format(path))
         path_name = [self.index2node[int(x)] for x in path]
         if verbose: print('start:', path_name)
         weights = (self.capacity > 0) * self.links
