@@ -9,6 +9,20 @@ from common import LookupTable
 from misc_utils import Flush
 from train_model import load_data_new, graph, data_process, _tqdm
 
+#
+import tensorflow as tf
+import keras.backend.tensorflow_backend as KTF
+
+def get_session(gpu_fraction = 0.15):
+    num_threads = os.environ.get('OMP_NUM_THREADS')
+    gpu_options = tf.GPUOptions(per_process_gpu_memory_fraction = gpu_fraction)
+    if num_threads:
+        return tf.Session(config = tf.ConfigProto(gpu_options = tpu_options, intra_op_parallelism_threads=num_threads))
+    else:
+        return tf.Session(config=tf.ConfigProto(gpu_options = gpu_options))
+
+#
+
 NAME = 'RV4'
 parser = argparse.ArgumentParser(prog=NAME)
 parser.add_argument('-data', type=int, default=1, help='source of data')
@@ -17,7 +31,6 @@ args = parser.parse_args()
 print('params:', args)
 logfile = None
 stdout_bak = sys.stdout
-STAMP = time.strftime('%Y-%m-%d', time.localtime())  # 第二个参数是默认参数
 
 
 def make_test_data(ntable, routes_test, max_inter_capacity_size_test, maxlen_que, maxlen_ans, features, max_intra_capacity_size_test):
@@ -50,21 +63,35 @@ def make_test_data(ntable, routes_test, max_inter_capacity_size_test, maxlen_que
     return cap_test, que_test, ans_test, hid_test
 
 
-_DATA_DIR = os.path.join(os.path.expanduser('~/datasets/routing'), 'data0524-{}'.format(args.data))
+#_DATA_DIR = os.path.join(os.path.expanduser('~/datasets/routing'), 'data0524-{}'.format(args.data))
+_DATA_DIR = os.path.join(os.path.expanduser('~/Zhong_Exp/Datasets/routing'), 'data-{}'.format(args.data))
+_MODELS_DIR = os.path.join(os.path.expanduser('~/Zhong_Exp/Datasets/routing'), 'models-{}'.format(args.data))
+_STATICLOGS_DIR = os.path.join(os.path.expanduser('~/Zhong_Exp/Datasets/routing'), 'test-logs-{}'.format(args.data))
 
 print('\n===== static test =====')
-_LOAD_DIRECT = 'load_direct.txt'
-_LOAD_DIRECT_PATH = os.path.join(_DATA_DIR, _LOAD_DIRECT)
-load_lines = []
+KTF.set_session(get_session())
+_LOAD_DIRECT_MODEL = 'load_direct_model.txt'
+_LOAD_DIRECT_TEST = 'load_direct_test.txt'
+_LOAD_DIRECT_PATH = os.path.join(_DATA_DIR, _LOAD_DIRECT_MODEL)
+_LOAD_DIRECT_PATH_TEST = os.path.join(_DATA_DIR, _LOAD_DIRECT_TEST)
+model_load_lines = []
+test_load_lines = []
 with open(_LOAD_DIRECT_PATH, 'r', encoding='gb2312') as fr:
     for load_line in _tqdm(fr, desc='loading'):
         load_line = load_line.strip()
-        load_lines.append(load_line)
+        model_load_lines.append(load_line)
 
-for load_train in load_lines:
-    print('\nloading trained model' + load_train + '...')
-    model = load_model('models/Req2Route' + load_train + '.h5')
-    for load_test in load_lines:
+with open(_LOAD_DIRECT_PATH_TEST, 'r', encoding='gb2312') as fr:
+    for load_line in _tqdm(fr, desc='loading'):
+        load_line = load_line.strip()
+        test_load_lines.append(load_line)
+
+for load_train in model_load_lines:
+    load_name = 'Req2Route' + load_train + '.h5'
+    model_name = os.path.join(_MODELS_DIR, load_name)
+    print('\nloading trained model' + model_name + '...')
+    model = load_model(model_name)
+    for load_test in test_load_lines:
         print('testing trained model of' + load_train + 'on' + load_test)
         count_all, count_good, count_match, count_ignore = 0, 0, 0, 0
 
@@ -74,9 +101,10 @@ for load_train in load_lines:
 
         if args.redirect:
             try:
-                logfile_name = 'logs/' + 'train' + load_train + '_test' + load_test + '-static-print.log'
+                logfile_name = 'train' + load_train + '_test' + load_test + '-static-print.log'
+                whole_logfile = os.path.join(_STATICLOGS_DIR, logfile_name)
                 print('static running stdout messages will be saved in', logfile_name)
-                logfile = open(logfile_name, 'w', encoding='utf8')
+                logfile = open(whole_logfile, 'w', encoding='utf8')
                 sys.stdout = Flush(logfile)
             except:
                 print('create logfile fail, use stdout instead', file=sys.stderr)
@@ -99,7 +127,9 @@ for load_train in load_lines:
 
         cap_test, que_test, ans_test, hid_test = make_test_data(ntable, routes_test, max_inter_capacity_size_test, maxlen_que, maxlen_ans, features, max_intra_capacity_size_test)
 
-        with open('logs/' + 'train' + load_train + 'test' + load_test + '-static.log', 'w', encoding='utf8') as fw:
+        staticlog = 'train' + load_train + 'test' + load_test + '-static.log'
+        wholestaticlog = os.path.join(_STATICLOGS_DIR, staticlog)
+        with open(wholestaticlog, 'w', encoding='utf8') as fw:
             for cap_sample, que_sample, ans_sample, hid_sample in _tqdm(zip(cap_test, que_test, ans_test, hid_test),desc='static'):
                 count_all += 1
 
@@ -115,8 +145,10 @@ for load_train in load_lines:
 
                 real = [que_sample_index[0]] + ans_sample_index + [que_sample_index[1]]
                 pred_path_index = [que_sample_index[0]] + pred_ans_seq_index + [que_sample_index[1]]
-                print('\nreal route (index):', real)
-                print('predit route (index):', pred_path_index)
+                #print('\nreal route (index):', real)
+                #print('predit route (index):', pred_path_index)
+                #print('inter capacity:', cap_sample)
+                #print('intra capacity:', hid_sample)
 
                 # set current net status
                 graph.reset_capacity()
@@ -127,19 +159,25 @@ for load_train in load_lines:
                 else:  # valid given capacity, check current
                     # metric 1: match (local best)
                     count_match += (real == pred_path_index)
+                    incre_match = (real == pred_path_index)
                     # metric 2: good path
                     if 61 in pred_path_index:  # pred no path, real -1, see if match
                         count_good += (real == pred_path_index)
+                        incre_good = (real == pred_path_index)
                     else:  # pred a path
-                        success, success_path = graph.is_buildable(pred_path_index, verbose=True)
+                        success, success_path = graph.is_buildable(pred_path_index, verbose=False)
                         count_good += success
-                        print('{}: {}, {}, {}'.format(que_sample, success, real, pred_path_index), file=fw, flush=True)
-                print('accumulated good:', count_good)
+                        incre_good = success
+                if incre_match > incre_good: 
+                    print('Error', file=fw, flush=True)
+                    print('Error on {} {}'.format(count_good, count_match))
+                print('{}, {}, {}: {}, {}, {}'.format(count_good, count_match, que_sample, success, real, pred_path_index), file=fw, flush=True)
+                #print('accumulated good:', count_good)
                 if count_all % 1000 == 0:
                     useful = count_all - count_ignore
-                    print('\nresults of static check (count_all={}):'.format(count_all))
-                    print('- count_good: {}/{} ({:.4f})'.format(count_good, useful, count_good / useful))
-                    print('- count_match: {}/{} ({:.4f})'.format(count_match, useful, count_match / useful))
+                    #print('\nresults of static check (count_all={}):'.format(count_all))
+                    #print('- count_good: {}/{} ({:.4f})'.format(count_good, useful, count_good / useful))
+                    #print('- count_match: {}/{} ({:.4f})'.format(count_match, useful, count_match / useful))
         print('=' * 30)
         print('\nfinal results of static check:')
         useful = count_all - count_ignore
