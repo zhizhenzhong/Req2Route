@@ -17,16 +17,19 @@ class Graph:
         assert 'links' in self.topo, 'topo file must contains links'
         assert 'linkstate' in self.topo, 'topo file must contains linkstate'
         assert 'indexnode' in self.topo, 'topo file must contains indexnode'
+        assert 'interdomain_dis' in self.topo, 'topo file must contains interdomain dis'
         self.nodes = self.topo['nodes']
         self.domain = self.topo['domain']
         self.indexnode = self.topo['indexnode']
         self.capacity = np.array(self.topo['capacity'], dtype=int)
         self.links = np.array(self.topo['links'], dtype=int)
         self.linkstate = np.array(self.topo['linkstate'], dtype=int)
+        self.interdomain_dis = self.topo['interdomain_dis']
 
         #self.node2index = {node : index for node, index in self.indexnode.items()}
         self.index2node = {index : node for node, index in self.indexnode.items()}
         self.node2domain = {node : domain_id for domain_id, domain_nodes in self.domain.items() for node in domain_nodes}
+        
         #print(self.nodeindex)
         #print('capacity:', self.capacity.shape)
         #print('links:', self.links.shape)
@@ -52,8 +55,10 @@ class Graph:
         for index, linkstate_data in enumerate(self.linkstate):
             if linkstate_data[2] == 1:
                 graph_matrix[self.indexnode[linkstate_data[0]]][self.indexnode[linkstate_data[1]]] = hidden_caps[index]
+                self.capacity[self.indexnode[linkstate_data[0]]][self.indexnode[linkstate_data[1]]] = hidden_caps[index]
             if linkstate_data[2] == 10:
                 graph_matrix[self.indexnode[linkstate_data[0]]][self.indexnode[linkstate_data[1]]] = caps[index-152] # the first 102 links are hidden links
+                self.capacity[self.indexnode[linkstate_data[0]]][self.indexnode[linkstate_data[1]]] = caps[index - 152]
         #print('vec 2 matrix result:', graph_matrix)
         return graph_matrix
 
@@ -63,10 +68,10 @@ class Graph:
         for index, linkstate_data in enumerate(self.linkstate):
             if linkstate_data[2] == 10:
                 cap[index-152] = graph_matrix[self.indexnode[linkstate_data[0]]][self.indexnode[linkstate_data[1]]]
-        print('matrix 2 vec result:', cap)
+        #print('matrix 2 vec result:', cap)
         return cap
 
-    def is_buildable(self, path, verbose=False):
+    def is_buildable(self, path, verbose=False, use_place = False):
         if verbose: print('\n[is_buildable] start (index): {}'.format(path))
         path_name = [self.index2node[int(x)] for x in path]
         if verbose: print('start:', path_name)
@@ -88,7 +93,8 @@ class Graph:
                     #dst_index = self.index2node[dst]
                     if self.capacity[src, dst] <= 0:
                         success = False
-                        if verbose: print(' ! no capacity: [{}] -> [{}]'.format(self.index2node[src], self.index2node[dst]))
+                        print(' ! no capacity: [{}] -> [{}]'.format(self.index2node[src], self.index2node[dst]))
+                        if use_place: print('! Wrong in existing task loading!', path_name)
                         break
                     else:
                         links.append((src, dst))
@@ -102,7 +108,7 @@ class Graph:
                     shortest_path_name = [self.index2node[x] for x in shortest_path]
                     if dist == -1:
                         success = False
-                        if verbose: print(' ! no dijkstra path: {} -> {}'.format(self.index2node[src], self.index2node[dsts]))
+                        print(' ! no dijkstra path: {} -> {}'.format(self.index2node[src], self.index2node[dsts]))
                     else:
                         for src_intra, dst_intra in zip(shortest_path[:-1], shortest_path[1:]):
                             links.append((src_intra, dst_intra))
