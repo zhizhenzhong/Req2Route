@@ -7,13 +7,13 @@ import numpy as np
 from keras.models import load_model
 from common import LookupTable
 from misc_utils import Flush
-from train_model import load_data_new, graph, data_process, _tqdm
+from train_model import load_data_new, Graph, data_process, _tqdm
 
 #
 import tensorflow as tf
 import keras.backend.tensorflow_backend as KTF
 
-def get_session(gpu_fraction = 0.15):
+def get_session(gpu_fraction = 0.05):
     num_threads = os.environ.get('OMP_NUM_THREADS')
     gpu_options = tf.GPUOptions(per_process_gpu_memory_fraction = gpu_fraction)
     if num_threads:
@@ -62,6 +62,13 @@ def make_test_data(ntable, routes_test, max_inter_capacity_size_test, maxlen_que
 
     return cap_test, que_test, ans_test, hid_test
 
+def overlap_cancellation(path):
+    cancel_path = path
+    for src, dst in zip(path[:-1], path[1:]):
+        if src == dst:
+            cancel_path.remove(src)
+    return cancel_path
+
 
 #_DATA_DIR = os.path.join(os.path.expanduser('~/datasets/routing'), 'data0524-{}'.format(args.data))
 _DATA_DIR = os.path.join(os.path.expanduser('~/Zhong_Exp/Datasets/routing'), 'data-{}'.format(args.data))
@@ -85,6 +92,8 @@ with open(_LOAD_DIRECT_PATH_TEST, 'r', encoding='gb2312') as fr:
     for load_line in _tqdm(fr, desc='loading'):
         load_line = load_line.strip()
         test_load_lines.append(load_line)
+
+graph = Graph(topo_file = 'topo9.yaml')
 
 for load_train in model_load_lines:
     load_name = 'Req2Route' + load_train + '.h5'
@@ -133,6 +142,8 @@ for load_train in model_load_lines:
             for cap_sample, que_sample, ans_sample, hid_sample in _tqdm(zip(cap_test, que_test, ans_test, hid_test),desc='static'):
                 count_all += 1
 
+                
+
                 pred_probs = model.predict(x=[cap_sample[np.newaxis, :], que_sample[np.newaxis, :]])
                 pred_ans_seq = [x for x in graph.seq_before_zero(pred_probs.argmax(axis=-1)[0])]
                 pred_ans_seq_index = [x - 1 for x in pred_ans_seq]
@@ -144,15 +155,18 @@ for load_train in model_load_lines:
                 ans_sample_index = [x - 1 for x in ans_sample]
 
                 real = [que_sample_index[0]] + ans_sample_index + [que_sample_index[1]]
-                pred_path_index = [que_sample_index[0]] + pred_ans_seq_index + [que_sample_index[1]]
+                pred_path_index_ovp = [que_sample_index[0]] + pred_ans_seq_index + [que_sample_index[1]]
+
+                pred_path_index = overlap_cancellation(pred_path_index_ovp)
                 #print('\nreal route (index):', real)
                 #print('predit route (index):', pred_path_index)
                 #print('inter capacity:', cap_sample)
                 #print('intra capacity:', hid_sample)
-
                 # set current net status
                 graph.reset_capacity()
+                #print('reset inter capacity:', cap_sample)
                 valid_capacity = graph.set_capacity(caps=cap_sample, hidden_caps=hid_sample)  # TODO
+                #print('inter capacity:', cap_sample)
 
                 if not valid_capacity:
                     count_ignore += 1

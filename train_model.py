@@ -24,7 +24,7 @@ from keras.utils import plot_model
 import tensorflow as tf
 import keras.backend.tensorflow_backend as KTF
 
-def get_session(gpu_fraction = 0.3):
+def get_session(gpu_fraction = 0.1):
     num_threads = os.environ.get('OMP_NUM_THREADS')
     gpu_options = tf.GPUOptions(per_process_gpu_memory_fraction = gpu_fraction)
     if num_threads:
@@ -72,9 +72,11 @@ class LossHistory(callbacks.Callback):
             # val_loss
             plt.plot(iters, self.val_loss[loss_type], 'k', label='validate loss')
         plt.grid(True)
-        plt.xlabel(loss_type)
-        plt.ylabel('loss')
-        plt.legend(loc="right")
+        plt.xticks(fontsize=12)
+        plt.yticks(fontsize=12)
+        plt.xlabel(loss_type, fontsize=12)
+        plt.ylabel('loss', fontsize=12)
+        plt.legend(loc="upper right", fontsize=12)
 
 
 def _tqdm(iterable, desc=None):
