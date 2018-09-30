@@ -25,18 +25,10 @@ class Graph:
         self.links = np.array(self.topo['links'], dtype=int)
         self.linkstate = np.array(self.topo['linkstate'], dtype=int)
         self.interdomain_dis = self.topo['interdomain_dis']
-
-        #self.node2index = {node : index for node, index in self.indexnode.items()}
         self.index2node = {index : node for node, index in self.indexnode.items()}
         self.node2domain = {node : domain_id for domain_id, domain_nodes in self.domain.items() for node in domain_nodes}
-        
-        #print(self.nodeindex)
-        #print('capacity:', self.capacity.shape)
-        #print('links:', self.links.shape)
 
         self.initial_capacity = copy.deepcopy(self.capacity)
-
-        #self.node2index = {node: index_num for node, index_num in self.nodeindex}
 
     def get_index_route(self, input_route): #get path index from path name
         return [self.indexnode[x] for x in input_route]
@@ -44,41 +36,25 @@ class Graph:
     def get_route_name(self, input_route): #get path name after decode (there is - signal after decode)
         return [self.index2node[int(x)] for x in input_route.split('-')]
 
-    def evaluate_intra_path(self, path_name):
-        ori_domain_num = self.node2domain[path_name[0]]
-        real_intra_path = True
-        for node in path_name:
-            domain_num = self.node2domain[node]
-            if domain_num != ori_domain_num:
-                real_intra_path = False
-                break
-        return real_intra_path
-
     def reset_capacity(self):
         self.capacity = copy.deepcopy(self.initial_capacity)
 
-    #
-    def set_capacity(self, caps, hidden_caps):  # TODO
+    
+    def set_capacity(self, caps, hidden_caps):  
         """update net capacity using given capacity list,
         e.g., [10, 9, 10, 9, ..., 10, 10]"""
-        #graph_matrix = [[0 for i in range(61)] for i in range(61)]
         for index, linkstate_data in enumerate(self.linkstate):
             if linkstate_data[2] == 1:
-                #graph_matrix[self.indexnode[linkstate_data[0]]][self.indexnode[linkstate_data[1]]] = hidden_caps[index]
                 self.capacity[self.indexnode[linkstate_data[0]]][self.indexnode[linkstate_data[1]]] = hidden_caps[index]
             if linkstate_data[2] == 10:
-                #graph_matrix[self.indexnode[linkstate_data[0]]][self.indexnode[linkstate_data[1]]] = caps[index-152] # the first 102 links are hidden links
                 self.capacity[self.indexnode[linkstate_data[0]]][self.indexnode[linkstate_data[1]]] = caps[index - 152]
-        #print('vec 2 matrix result:', graph_matrix)
-        #return graph_matrix
 
-    def cap_mat2list(self, graph_matrix):  # TODO
+    def cap_mat2list(self, graph_matrix):  
         """use self.capacity to get current capacity list (used for Existing input)"""
         cap = np.array([0 for i in range(48)])
         for index, linkstate_data in enumerate(self.linkstate):
             if linkstate_data[2] == 10:
                 cap[index-152] = graph_matrix[self.indexnode[linkstate_data[0]]][self.indexnode[linkstate_data[1]]]
-        #print('matrix 2 vec result:', cap)
         return cap
 
     def is_buildable(self, path, verbose=False, use_place = False):
@@ -92,15 +68,11 @@ class Graph:
         links = []
         real_path = []
         for src, dst in zip(path[:-1], path[1:]):
-            # src and dst are cross domain link
-            #print(self.node2index[src], self.node2index[dst])
             src, dst = int(src), int(dst)
             if src == 61 or dst == 61:
                 success = False
             else:
                 if self.node2domain[self.index2node[src]] != self.node2domain[self.index2node[dst]]:
-                    #src_index = self.index2node[src]
-                    #dst_index = self.index2node[dst]
                     if self.capacity[src, dst] <= 0:
                         success = False
                         print(' ! no capacity: [{}] -> [{}]'.format(self.index2node[src], self.index2node[dst]))
@@ -119,15 +91,13 @@ class Graph:
                     weights = (self.capacity > 0) * self.links
                     for nn in range(61):
                         if self.node2domain[self.index2node[nn]] != domain_index:
-                            for tt in range(60):
+                            for tt in range(61):
                                 weights[nn][tt] = 0
                                 weights[tt][nn] = 0
 
                     dist, shortest_path = self.dijkstra(weights, src, dst)
                     shortest_path_name = [self.index2node[x] for x in shortest_path]
-                    #intra_path = self.evaluate_intra_path(shortest_path_name)
-                    #if intra_path == False:
-                        #print('dijkstra: ', shortest_path_name)
+                    
                     if dist == -1:
                         success = False
                         print(' ! no dijkstra path: {} -> {} {} {}'.format(self.index2node[src], self.index2node[dst], dist, intra_path))
@@ -141,9 +111,7 @@ class Graph:
             print('[is_buildable] end')
         if success:
             real_path = [links[0][0]] + [y for x, y in links]
-        #if success and build:  # update capacity if build this path
-            #for link in links:
-                #self.capacity[link[0], link[1]] -= 1
+
         return success, real_path
 
     def build_path(self, path):
@@ -186,13 +154,6 @@ class Graph:
 
 if __name__ == '__main__':
     graph = Graph('topo9.yaml')
-    #graph.is_buildable([1, 5, 8, 13, 14, 20, 21, 26], verbose=True)
-    #graph.is_buildable([1, 5, 8, 13, 14, 20, 21, 26], verbose=False)
-    #graph.is_buildable([1, 5, 8, 13, 14, 20, 21, 26], verbose=False)
-    #graph.is_buildable([1, 5, 8, 13, 14, 20, 21, 26], verbose=False)
-    #graph.is_buildable([1, 5, 8, 13, 14, 20, 21, 26], verbose=False)
-    #graph.is_buildable([1, 5, 8, 13, 14, 20, 21, 26], verbose=True)
-    #graph.set_capacity('multi_domain_topo.yaml', [10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10], [10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10])
-    #graph.cap_mat2list('multi_domain_topo.yaml',np.array(graph.topo['capacity'], dtype=int))
+ 
     print('\nprocess finished~~~')
-
+    
