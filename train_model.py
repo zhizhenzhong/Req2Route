@@ -187,6 +187,7 @@ def data_process(routes, routes_test, min_node_index, max_node_index, min_node_t
 
     max_inter_capacity_size_test = int(np.max([len(route_test.inter_capacity) for route_test in routes_test]))
     max_intra_capacity_size_test = int(np.max([len(route_test.intra_capacity) for route_test in routes_test]))
+    # max_history_test = int(np.max([len(route_test.histories) for route_test in routes_test]))
     # check congestion
     has_congestion_test = False
     congestion_node_test = 'none'
@@ -232,9 +233,18 @@ def make_train_data(ntable, routes, max_inter_capacity_size, maxlen_que, maxlen_
 
     return cap_train, que_train, ans_train
 
+# data path configs, Mac version
+#_DATA_DIR = os.path.join(os.path.expanduser('~/datasets/routing'), 'data0524-{}'.format(args.data))
+
+# data path configs, server version
+#_DATA_FILE_NAME = 'output_BRPC.dat'
 _DATA_DIR = os.path.join(os.path.expanduser('~/Zhong_Exp/Datasets/routing'), 'data-{}'.format(args.data))
 _TRAINLOGS_DIR = os.path.join(os.path.expanduser('~/Zhong_Exp/Datasets/routing/'), 'train-logs-{}'.format(args.data))
 _MODELS_DIR = os.path.join(os.path.expanduser('~/Zhong_Exp/Datasets/routing/'), 'models-{}'.format(args.data))
+#_DATA_FILE_PATH = os.path.join(_DATA_DIR, _DATA_FILE_NAME)
+#_PKL_FILE_PATH = _DATA_FILE_PATH.replace('.dat', '.pkl')
+
+#STAMP = time.strftime('%Y-%m-%d', time.localtime())  # 第二个参数是默认参数
 
 def model_training(capacity_size, cap_train, que_train, ans_train, load):
     ## model parameters
