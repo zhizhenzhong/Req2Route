@@ -74,7 +74,6 @@ def overlap_cancellation(path):
     return cancel_path
 
 
-# _DATA_DIR = os.path.join(os.path.expanduser('~/datasets/routing'), 'data0524-{}'.format(args.data))
 _DATA_DIR = os.path.join(os.path.expanduser('~/Zhong_Exp/Datasets/routing'), 'data-{}'.format(args.data))
 _MODELS_DIR = os.path.join(os.path.expanduser('~/Zhong_Exp/Datasets/routing'), 'models-{}'.format(args.data))
 _STATICLOGS_DIR = os.path.join(os.path.expanduser('~/Zhong_Exp/Datasets/routing'), 'test-logs-{}'.format(args.data))
@@ -172,23 +171,16 @@ for load_train in model_load_lines:
                 pred_path_index_ovp = [que_sample_index[0]] + pred_ans_seq_index + [que_sample_index[1]]
 
                 pred_path_index = overlap_cancellation(pred_path_index_ovp)
-                # print('\nreal route (index):', real)
-                # print('predit route (index):', pred_path_index)
-                # print('inter capacity:', cap_sample)
-                # print('intra capacity:', hid_sample)
-                # set current net status
-                graph.reset_capacity()
-                # print('reset inter capacity:', cap_sample)
-                graph.set_capacity(caps=cap_sample, hidden_caps=hid_sample)  # TODO
-                # print('inter capacity:', cap_sample)
 
-                #if not valid_capacity:
-                    #count_ignore += 1
-                #else:  # valid given capacity, check current
-                    # metric 1: match (local best)
+                graph.reset_capacity()
+                
+                graph.set_capacity(caps=cap_sample, hidden_caps=hid_sample) 
+               
+                # metric 1: match (same route)
                 count_match += (real == pred_path_index)
                 incre_match = (real == pred_path_index)
-                    # metric 2: good path
+                
+                # metric 2: good path
                 if 61 in pred_path_index:  # pred no path, real -1, see if match
                     count_good += (real == pred_path_index)
                     incre_good = (real == pred_path_index)
@@ -201,12 +193,6 @@ for load_train in model_load_lines:
                     print('Error on {} {}'.format(count_good, count_match))
                 print('{}, {}, {}: {}, {}, {}'.format(count_good, count_match, que_sample, success, real,
                                                       pred_path_index), file=fw, flush=True)
-                # print('accumulated good:', count_good)
-                #if count_all % 1000 == 0:
-                    #useful = count_all - count_ignore
-                    # print('\nresults of static check (count_all={}):'.format(count_all))
-                    # print('- count_good: {}/{} ({:.4f})'.format(count_good, useful, count_good / useful))
-                    # print('- count_match: {}/{} ({:.4f})'.format(count_match, useful, count_match / useful))
         print('=' * 30)
         print('\nfinal results of static check:')
         useful = count_all - count_ignore
