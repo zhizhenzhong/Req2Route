@@ -27,7 +27,6 @@ class Graph:
         self.interdomain_dis = self.topo['interdomain_dis']
         self.index2node = {index : node for node, index in self.indexnode.items()}
         self.node2domain = {node : domain_id for domain_id, domain_nodes in self.domain.items() for node in domain_nodes}
-
         self.initial_capacity = copy.deepcopy(self.capacity)
 
     def get_index_route(self, input_route): #get path index from path name
@@ -38,7 +37,6 @@ class Graph:
 
     def reset_capacity(self):
         self.capacity = copy.deepcopy(self.initial_capacity)
-
     
     def set_capacity(self, caps, hidden_caps):  
         """update net capacity using given capacity list,
