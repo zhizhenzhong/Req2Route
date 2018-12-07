@@ -7,4 +7,6 @@ Abstract: The global communication networks are supported by high-capacity light
 
 This manuscript is under submission to IEEE/OSA Journal of Lightwave Technology.
 
+A preliminary version of this work is now accepted as a conference paper at OFC 2019.
+
 If you are interested in this study, please drop me an email: zhongzz14[at]mails.tsinghua.edu.cn
