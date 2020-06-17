@@ -8,5 +8,5 @@ Zhizhen Zhong, Nan Hua, Zhigang Yuan, Yanhe Li, and Xiaoping Zheng. "Routing wit
 
 Abstract: We first propose a novel multi-domain routing paradigm that transforms the routing problem from heuristic-algorithm-based computation to artificial-intelligence-based data analytics. Numerical results prove that our proposal can achieve excellent routing accuracy, and significant signaling reduction.
 
-If you are interested in this study, please drop me an email: zhongzz14[at]mails.tsinghua.edu.cn
+If you are interested in this study, please drop me an email: zhizhen.zhong.eecs[at]gmail.com
 
